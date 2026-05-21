@@ -1,0 +1,120 @@
+Phase 1: scraping 97 chapters...
+Chapter 10: scraped 9 shlokas
+Chapter 9: scraped 45 shlokas
+Chapter 5: scraped 24 shlokas
+Chapter 8: scraped 9 shlokas
+Chapter 1: scraped 24 shlokas
+Chapter 2: scraped 13 shlokas
+Chapter 4: scraped 30 shlokas
+Chapter 6: scraped 53 shlokas
+Chapter 7: scraped 43 shlokas
+Chapter 3: scraped 74 shlokas
+Chapter 11: scraped 16 shlokas
+Chapter 13: scraped 13 shlokas
+Chapter 15: scraped 14 shlokas
+Chapter 12: scraped 15 shlokas
+Chapter 14: scraped 15 shlokas
+Chapter 16: scraped 32 shlokas
+Chapter 17: scraped 28 shlokas
+Chapter 18: scraped 42 shlokas
+Chapter 19: scraped 15 shlokas
+Chapter 20: scraped 32 shlokas
+Chapter 22: scraped 11 shlokas
+Chapter 21: scraped 22 shlokas
+Chapter 23: scraped 14 shlokas
+Chapter 25: scraped 87 shlokas
+Chapter 26: scraped 13 shlokas
+Chapter 29: scraped 37 shlokas
+Chapter 27: scraped 40 shlokas
+Chapter 28: scraped 20 shlokas
+Chapter 30: scraped 43 shlokas
+Chapter 24: scraped 148 shlokas
+Chapter 31: scraped 18 shlokas
+Chapter 32: scraped 37 shlokas
+Chapter 33: scraped 99 shlokas
+Chapter 34: scraped 46 shlokas
+Chapter 35: scraped 50 shlokas
+Chapter 37: scraped 13 shlokas
+Chapter 38: scraped 4 shlokas
+Chapter 36: scraped 39 shlokas
+Chapter 41: scraped 34 shlokas
+Chapter 40: scraped 15 shlokas
+Chapter 42: scraped 18 shlokas
+Chapter 39: scraped 48 shlokas
+Chapter 43: scraped 78 shlokas
+Chapter 44: scraped 46 shlokas
+Chapter 47: scraped 89 shlokas
+Chapter 48: scraped 20 shlokas
+Chapter 45: scraped 155 shlokas
+Chapter 51: scraped 16 shlokas
+Chapter 49: scraped 37 shlokas
+Chapter 52: scraped 73 shlokas
+Chapter 50: scraped 97 shlokas
+Chapter 46: scraped 210 shlokas
+Chapter 53: scraped 70 shlokas
+Chapter 54: scraped 76 shlokas
+Chapter 55: scraped 83 shlokas
+Chapter 56: scraped 80 shlokas
+Chapter 58: scraped 72 shlokas
+Chapter 59: scraped 79 shlokas
+  Chapter 60, shloka 13: skipped (missing sanskrit or english)
+Chapter 60: scraped 73 shlokas
+Chapter 57: scraped 82 shlokas
+Chapter 61: scraped 82 shlokas
+Chapter 62: scraped 82 shlokas
+Chapter 63: scraped 83 shlokas
+Chapter 67: scraped 5 shlokas
+Chapter 64: scraped 58 shlokas
+Chapter 65: scraped 32 shlokas
+Chapter 69: scraped 4 shlokas
+Chapter 66: scraped 72 shlokas
+Chapter 71: scraped 4 shlokas
+Chapter 68: scraped 6 shlokas
+Chapter 70: scraped 44 shlokas
+Chapter 72: scraped 31 shlokas
+Chapter 73: scraped 23 shlokas
+Chapter 76: scraped 18 shlokas
+Chapter 74: scraped 28 shlokas
+Chapter 75: scraped 22 shlokas
+Chapter 78: scraped 16 shlokas
+Chapter 77: scraped 22 shlokas
+Chapter 79: scraped 15 shlokas
+Chapter 80: scraped 55 shlokas
+Chapter 81: scraped 85 shlokas
+Chapter 82: scraped 15 shlokas
+Chapter 83: scraped 111 shlokas
+Chapter 85: scraped 4 shlokas
+Chapter 86: scraped 9 shlokas
+Chapter 84: scraped 27 shlokas
+Chapter 88: scraped 5 shlokas
+Chapter 89: scraped 7 shlokas
+Chapter 87: scraped 13 shlokas
+Chapter 90: scraped 18 shlokas
+Chapter 91: scraped 14 shlokas
+Chapter 92: scraped 11 shlokas
+Chapter 95: scraped 9 shlokas
+Chapter 96: scraped 10 shlokas
+Chapter 93: scraped 20 shlokas
+Chapter 94: scraped 13 shlokas
+Chapter 97: scraped 25 shlokas
+Phase 1 complete: 3936 shlokas saved to structured_shlokas_raw.json
+Phase 2: translating 3936 shlokas in batches of 25...
+  Batch 1/158 (25 shlokas)...
+  Rate limited, waiting 15s (attempt 1)...
+  Rate limited, waiting 30s (attempt 2)...
+  Rate limited, waiting 45s (attempt 3)...
+  Rate limited, waiting 60s (attempt 4)...
+  Rate limited, waiting 75s (attempt 5)...
+  Rate limited, waiting 90s (attempt 6)...
+  Rate limited, waiting 105s (attempt 7)...
+Traceback (most recent call last):
+  File "/home/harshu/Codding/shloka_mailer/v2_scrape_and_translate.py", line 173, in <module>
+    scrape_and_translate()
+    ~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/harshu/Codding/shloka_mailer/v2_scrape_and_translate.py", line 164, in scrape_and_translate
+    shlokas = translate_all(shlokas)
+  File "/home/harshu/Codding/shloka_mailer/v2_scrape_and_translate.py", line 152, in translate_all
+    hindi_batch = translate_batch_with_retry(translator, batch)
+  File "/home/harshu/Codding/shloka_mailer/v2_scrape_and_translate.py", line 138, in translate_batch_with_retry
+    raise RuntimeError("Translation failed after retries")
+RuntimeError: Translation failed after retries

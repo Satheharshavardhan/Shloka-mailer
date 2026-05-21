@@ -1,0 +1,44 @@
+name: BPHS Daily Mailer
+
+on:
+  schedule:
+    # 4:00 PM IST = 10:30 UTC (GitHub Actions uses UTC)
+    - cron: "30 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send daily shloka email
+        env:
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        run: python main.py
+
+      - name: Commit reading progress
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add progress.json
+          if git diff --staged --quiet; then
+            echo "No progress change to commit."
+          else
+            git commit -m "chore: update reading progress [skip ci]"
+            git push
+          fi

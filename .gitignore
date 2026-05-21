@@ -1,0 +1,24 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local runs
+mailer.log
+
+# IDE
+.vscode/
+
+# Generated locally (regenerate with main.py / assets/generate_header.py)
+deprecated/output/
+
+# Large local-only assets (optional source download)
+assets/navagraha_source.jpg
+
+# Too large for GitHub (>100 MB)
+deprecated/data/*.pdf
