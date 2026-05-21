@@ -112,7 +112,8 @@ Shloka-mailer/
 | Regenerate header image | `python3 assets/generate_header.py` |
 | Re-scrape website | `python3 v2_scrape_and_translate.py` |
 | Resume translation only | `python3 v2_scrape_and_translate.py --translate-only` |
-| Reset reading to start | Set `progress.json` to `{"index": 0}` and commit |
+| Reset reading to start | Set `progress.json` to `{"index": 0, "completion_email_sent": false}` and commit |
+| Preview completion email | Set `"index": 3936` in `progress.json`, then `python3 main.py --dry-run` |
 
 ---
 
@@ -143,7 +144,7 @@ Each item in `structured_shlokas.json`:
 | Two emails per day | Disable local `cron` if Actions is enabled |
 | `Missing assets` | Run `python3 assets/generate_header.py` |
 | Gmail login error | Use App Password; enable 2FA on Google account |
-| Book completed | `progress.json` index ≥ 3936; reset index to `0` to restart |
+| Book completed | After the last shlokas, the next run sends a **completion email** once. Reset with `{"index": 0, "completion_email_sent": false}` to read again |
 
 ---
 

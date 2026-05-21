@@ -157,8 +157,90 @@ def image_sources(for_email: bool) -> tuple[str, str]:
     return "assets/header.png", "assets/om.png"
 
 
+def build_completion_html(total: int, *, for_email: bool = True) -> str:
+    today = datetime.now().strftime("%A, %d %B %Y")
+    header_src, _ = image_sources(for_email)
+
+    return f"""<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BPHS Complete</title>
+</head>
+<body style="margin:0;padding:0;background:#ebe3d4;font-family:{FONT};color:#2c2418;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+         style="background:#ebe3d4;padding:24px 12px;">
+    <tr><td align="center">
+
+        <table width="680" cellpadding="0" cellspacing="0" role="presentation"
+               style="max-width:680px;width:100%;background:#ffffff;border-radius:24px;
+                      overflow:hidden;box-shadow:0 12px 40px rgba(80,48,16,0.14);">
+
+          <tr>
+            <td style="padding:0;line-height:0;">
+              <img src="{header_src}" alt="Navagraha" width="680"
+                   style="display:block;width:100%;max-width:680px;height:auto;border:0;" />
+            </td>
+          </tr>
+          <tr>
+            <td style="background:linear-gradient(180deg,#3d5c1e 0%,#5a8a2e 100%);
+                       padding:36px 28px;text-align:center;">
+              <p style="margin:0 0 10px 0;font-size:18px;letter-spacing:3px;
+                        text-transform:uppercase;color:#d8f0c0;font-weight:600;">
+                पूर्ण · Complete
+              </p>
+              <h1 style="margin:0;font-family:{FONT};font-size:32px;line-height:1.3;
+                         font-weight:700;color:#fffef5;">
+                Brihat Parāśara Hora Śāstra
+              </h1>
+              <p style="margin:14px 0 0 0;font-size:20px;color:#e8ffd8;">{esc(today)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px 32px 28px 32px;text-align:center;">
+              <p style="margin:0 0 20px 0;font-size:42px;line-height:1;">🙏</p>
+              <p style="margin:0 0 18px 0;font-size:26px;font-weight:700;color:#5c3d1e;
+                        line-height:1.45;">
+                You have finished all {total} shlokas.
+              </p>
+              <p style="margin:0 0 24px 0;font-size:21px;color:#444;line-height:1.7;">
+                Your daily BPHS reading journey is complete. Thank you for your dedication
+                to this study of Jyotisha.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+                     style="background:#f7f0e4;border-radius:16px;border:1px solid #e0d0b8;">
+                <tr>
+                  <td style="padding:22px 20px;font-size:19px;color:#6b4a28;line-height:1.65;">
+                    <strong>Read again from the beginning?</strong><br/>
+                    Set <code style="background:#fff;padding:2px 6px;border-radius:4px;">
+                    progress.json</code> to:<br/><br/>
+                    <code style="background:#fff;padding:8px 12px;border-radius:6px;
+                                 display:inline-block;font-size:17px;">
+                    {{"index": 0, "completion_email_sent": false}}</code><br/><br/>
+                    Commit and push, or save locally — the next scheduled run will
+                    restart from Chapter 1.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+
 def build_html(
-    entries: list[dict], start_index: int, total: int, *, for_email: bool = True
+    entries: list[dict],
+    start_index: int,
+    total: int,
+    *,
+    for_email: bool = True,
+    is_last_batch: bool = False,
 ) -> str:
     today = datetime.now().strftime("%A, %d %B %Y")
     end_num = start_index + len(entries)
@@ -234,10 +316,10 @@ def build_html(
                 <tr>
                   <td style="padding:26px 24px;text-align:center;">
                     <p style="margin:0 0 10px 0;font-size:22px;color:#5c3d1e;font-weight:600;">
-                      🙏 Continue tomorrow at 4:00 PM
+                      {"🙏 Final shlokas for this journey" if is_last_batch else "🙏 Continue tomorrow at 4:00 PM"}
                     </p>
                     <p style="margin:0;font-size:18px;color:#7a6248;line-height:1.6;">
-                      The next 3 shlokas will arrive in your inbox automatically.
+                      {"Tomorrow you will receive a completion message. Thank you for studying BPHS." if is_last_batch else "The next 3 shlokas will arrive in your inbox automatically."}
                     </p>
                   </td>
                 </tr>
@@ -276,27 +358,53 @@ def build_email_message(html_body: str) -> MIMEMultipart:
     return msg
 
 
+def deliver_email(subject: str, html_body: str) -> None:
+    msg = build_email_message(html_body)
+    msg["From"] = EMAIL_ADDRESS
+    msg["To"] = TO_EMAIL
+    msg["Subject"] = subject
+
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+    server.sendmail(EMAIL_ADDRESS, TO_EMAIL, msg.as_string())
+    server.quit()
+
+
+def send_completion_email(total: int, *, dry_run: bool = False) -> None:
+    subject = "BPHS Complete — You have finished all shlokas"
+    html_body = build_completion_html(total, for_email=not dry_run)
+
+    print(f"Sending completion email ({total} shlokas read).")
+
+    if dry_run:
+        preview_path = os.path.join(
+            os.path.dirname(__file__), "deprecated", "output", "completion_preview.html"
+        )
+        os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+        with open(preview_path, "w", encoding="utf-8") as f:
+            f.write(build_completion_html(total, for_email=False))
+        print(f"Dry run: completion preview saved to {preview_path}")
+        return
+
+    deliver_email(subject, html_body)
+    print("Completion email sent successfully.")
+
+
 def send_daily_email(*, dry_run: bool = False) -> None:
     with open(BOOK_FILE, "r", encoding="utf-8") as f:
         book = json.load(f)
 
     if not os.path.exists(PROGRESS_FILE):
         with open(PROGRESS_FILE, "w") as f:
-            json.dump({"index": 0}, f)
+            json.dump({"index": 0, "completion_email_sent": False}, f)
 
     with open(PROGRESS_FILE, "r") as f:
         progress = json.load(f)
 
+    progress.setdefault("completion_email_sent", False)
     current_index = progress["index"]
-
-    if current_index >= len(book):
-        print("Book completed.")
-        return
-
-    entries = book[current_index : current_index + SHLOKAS_PER_DAY]
-    if not entries:
-        print("Book completed.")
-        return
+    total = len(book)
 
     if not EMAIL_ADDRESS or not EMAIL_PASSWORD or not TO_EMAIL:
         print("Error: Set EMAIL_ADDRESS, EMAIL_PASSWORD, and TO_EMAIL in .env or secrets.")
@@ -308,8 +416,34 @@ def send_daily_email(*, dry_run: bool = False) -> None:
             "Ensure assets/header.png and assets/om.png exist."
         )
 
+    if current_index >= total:
+        if progress["completion_email_sent"]:
+            print("Book completed. Completion email was already sent.")
+            return
+        send_completion_email(total, dry_run=dry_run)
+        if not dry_run:
+            progress["completion_email_sent"] = True
+            with open(PROGRESS_FILE, "w") as f:
+                json.dump(progress, f)
+        return
+
+    entries = book[current_index : current_index + SHLOKAS_PER_DAY]
+    if not entries:
+        if progress["completion_email_sent"]:
+            print("Book completed. Completion email was already sent.")
+            return
+        send_completion_email(total, dry_run=dry_run)
+        if not dry_run:
+            progress["completion_email_sent"] = True
+            with open(PROGRESS_FILE, "w") as f:
+                json.dump(progress, f)
+        return
+
+    is_last_batch = current_index + len(entries) >= total
     subject = f"BPHS Daily Reading — {datetime.now().strftime('%d %B %Y')}"
-    html_body = build_html(entries, current_index, len(book), for_email=True)
+    html_body = build_html(
+        entries, current_index, total, for_email=True, is_last_batch=is_last_batch
+    )
 
     print(
         f"Preparing email: shlokas {current_index + 1}–{current_index + len(entries)} "
@@ -321,24 +455,16 @@ def send_daily_email(*, dry_run: bool = False) -> None:
             os.path.dirname(__file__), "deprecated", "output", "email_preview.html"
         )
         os.makedirs(os.path.dirname(preview_path), exist_ok=True)
-        preview_html = build_html(entries, current_index, len(book), for_email=False)
+        preview_html = build_html(
+            entries, current_index, total, for_email=False, is_last_batch=is_last_batch
+        )
         with open(preview_path, "w", encoding="utf-8") as f:
             f.write(preview_html)
         print(f"Dry run: preview saved to {preview_path}")
         return
 
-    msg = build_email_message(html_body)
-    msg["From"] = EMAIL_ADDRESS
-    msg["To"] = TO_EMAIL
-    msg["Subject"] = subject
-
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_ADDRESS, TO_EMAIL, msg.as_string())
-        server.quit()
-
+        deliver_email(subject, html_body)
         print("Email sent successfully.")
         progress["index"] += len(entries)
         with open(PROGRESS_FILE, "w") as f:
