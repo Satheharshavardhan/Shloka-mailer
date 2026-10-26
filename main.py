@@ -359,7 +359,7 @@ def build_email_message(html_body: str) -> MIMEMultipart:
     return msg
 
 
-def _send_via_smtp(host: str, port: int, use_ssl: bool) -> None:
+def _send_via_smtp(host: str, port: int, use_ssl: bool, message: MIMEMultipart) -> None:
     if use_ssl:
         server = smtplib.SMTP_SSL(host, port, timeout=30, context=ssl.create_default_context())
     else:
@@ -370,13 +370,12 @@ def _send_via_smtp(host: str, port: int, use_ssl: bool) -> None:
 
     try:
         server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_ADDRESS, TO_EMAIL, msg.as_string())
+        server.sendmail(EMAIL_ADDRESS, TO_EMAIL, message.as_string())
     finally:
         server.quit()
 
 
 def deliver_email(subject: str, html_body: str) -> None:
-    global msg
     msg = build_email_message(html_body)
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
@@ -385,9 +384,9 @@ def deliver_email(subject: str, html_body: str) -> None:
     last_error = None
     for use_ssl, port in ((False, 587), (True, 465)):
         try:
-            _send_via_smtp("smtp.gmail.com", port, use_ssl)
+            _send_via_smtp("smtp.gmail.com", port, use_ssl, msg)
             return
-        except Exception as exc:  # pragma: no cover - runtime SMTP failure path
+        except Exception as exc:
             last_error = exc
             print(f"SMTP attempt failed via {'SSL' if use_ssl else 'STARTTLS'} on port {port}: {exc}")
 
