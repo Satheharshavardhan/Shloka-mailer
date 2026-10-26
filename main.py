@@ -3,6 +3,7 @@ import html as html_lib
 import json
 import os
 import smtplib
+import ssl
 import sys
 from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
@@ -62,7 +63,7 @@ def build_section_block(label: str, content: str, bg: str, label_color: str) -> 
               </table>
             </td>
           </tr>
-"""
+ """
 
 
 def build_shloka_card(entry: dict, card_num: int, om_src: str) -> str:
@@ -148,7 +149,7 @@ def build_shloka_card(entry: dict, card_num: int, om_src: str) -> str:
         </table>
       </td>
     </tr>
-"""
+ """
 
 
 def image_sources(for_email: bool) -> tuple[str, str]:
@@ -358,17 +359,46 @@ def build_email_message(html_body: str) -> MIMEMultipart:
     return msg
 
 
+def _send_via_smtp(host: str, port: int, use_ssl: bool) -> None:
+    if use_ssl:
+        server = smtplib.SMTP_SSL(host, port, timeout=30, context=ssl.create_default_context())
+    else:
+        server = smtplib.SMTP(host, port, timeout=30)
+        server.ehlo()
+        server.starttls(context=ssl.create_default_context())
+        server.ehlo()
+
+    try:
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_ADDRESS, TO_EMAIL, msg.as_string())
+    finally:
+        server.quit()
+
+
 def deliver_email(subject: str, html_body: str) -> None:
+    global msg
     msg = build_email_message(html_body)
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = TO_EMAIL
     msg["Subject"] = subject
 
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-    server.sendmail(EMAIL_ADDRESS, TO_EMAIL, msg.as_string())
-    server.quit()
+    last_error = None
+    for use_ssl, port in ((False, 587), (True, 465)):
+        try:
+            _send_via_smtp("smtp.gmail.com", port, use_ssl)
+            return
+        except Exception as exc:  # pragma: no cover - runtime SMTP failure path
+            last_error = exc
+            print(f"SMTP attempt failed via {'SSL' if use_ssl else 'STARTTLS'} on port {port}: {exc}")
+
+    if EMAIL_ADDRESS and "gmail.com" in EMAIL_ADDRESS.lower():
+        raise RuntimeError(
+            "Unable to send email via Gmail SMTP. Check that EMAIL_PASSWORD is a valid Gmail App Password "
+            "(not your regular password), and that 2-Step Verification is enabled for the account. "
+            f"Original error: {last_error}"
+        )
+
+    raise RuntimeError(f"Unable to send email. Original error: {last_error}")
 
 
 def send_completion_email(total: int, *, dry_run: bool = False) -> None:
